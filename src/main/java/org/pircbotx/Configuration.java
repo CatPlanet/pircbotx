@@ -97,6 +97,7 @@ public class Configuration {
 	protected final int dccAcceptTimeout;
 	protected final int dccResumeAcceptTimeout;
 	protected final boolean dccPassiveRequest;
+	protected final boolean allocatingSpace;
 	//Connect information
 	protected final ImmutableList<ServerEntry> servers;
 	protected final String serverPassword;
@@ -204,6 +205,7 @@ public class Configuration {
 		this.dccAcceptTimeout = builder.getDccAcceptTimeout();
 		this.dccResumeAcceptTimeout = builder.getDccResumeAcceptTimeout();
 		this.dccPassiveRequest = builder.isDccPassiveRequest();
+		this.allocatingSpace = builder.isAllocateSpace();
 		this.servers = ImmutableList.copyOf(builder.getServers());
 		this.serverPassword = builder.getServerPassword();
 		this.socketFactory = builder.getSocketFactory();
@@ -355,6 +357,10 @@ public class Configuration {
 		 * otherwise, default false
 		 */
 		protected boolean dccPassiveRequest = false;
+		/**
+		 * Allocate space when downloading DCC files, default is false
+		 */
+		protected boolean allocateSpace = false;
 		//Connect information
 		/**
 		 * List of servers to connect to, easily add with the addServer methods
@@ -555,6 +561,7 @@ public class Configuration {
 			this.dccAcceptTimeout = configuration.getDccAcceptTimeout();
 			this.dccResumeAcceptTimeout = configuration.getDccResumeAcceptTimeout();
 			this.dccPassiveRequest = configuration.isDccPassiveRequest();
+			this.allocateSpace = configuration.isAllocatingSpace();
 			this.servers.clear();
 			this.servers.addAll(configuration.getServers());
 			this.serverPassword = configuration.getServerPassword();
@@ -618,6 +625,7 @@ public class Configuration {
 			this.dccAcceptTimeout = otherBuilder.getDccAcceptTimeout();
 			this.dccResumeAcceptTimeout = otherBuilder.getDccResumeAcceptTimeout();
 			this.dccPassiveRequest = otherBuilder.isDccPassiveRequest();
+			this.allocateSpace = otherBuilder.isAllocateSpace();
 			this.servers.clear();
 			this.servers.addAll(otherBuilder.getServers());
 			this.serverPassword = otherBuilder.getServerPassword();

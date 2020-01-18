@@ -57,7 +57,8 @@ public class ReceiveFileTransfer extends FileTransfer {
 				FileChannel outChannel = outputStream.getChannel();) {
 
 			acknowledge = new SendFileTransferAcknowlegement(inChannel, outChannel);
-			outputStream.setLength(this.fileTransferStatus.getFileSize());
+			if(this.configuration.isAllocatingSpace())
+				outputStream.setLength(this.fileTransferStatus.getFileSize());
 			fileTransferStatus.start();
 
 			outChannel.position(fileTransferStatus.startPosition);
@@ -99,6 +100,14 @@ public class ReceiveFileTransfer extends FileTransfer {
 			log.info("Receive file transfer of file {} ended with state {}", file.getName(),
 					fileTransferStatus.dccState);
 
+		}
+		
+		if(fileTransferStatus.dccState == DccState.ERROR && this.configuration.isAllocatingSpace()) {
+			try(RandomAccessFile outputStream = new RandomAccessFile(file, "rw")) {
+				outputStream.setLength(fileTransferStatus.getBytesAcknowledged());
+			} catch (IOException e) {
+				log.error("Could not trim allocated file {} to actual state.", file.getName(), e);
+			}
 		}
 	}
 }
