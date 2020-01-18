@@ -57,6 +57,7 @@ public class ReceiveFileTransfer extends FileTransfer {
 				FileChannel outChannel = outputStream.getChannel();) {
 
 			acknowledge = new SendFileTransferAcknowlegement(inChannel, outChannel);
+			outputStream.setLength(this.fileTransferStatus.getFileSize());
 			fileTransferStatus.start();
 
 			outChannel.position(fileTransferStatus.startPosition);
