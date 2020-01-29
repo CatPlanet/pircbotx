@@ -51,19 +51,25 @@ public class ReceiveFileTransfer extends FileTransfer {
 
 		// TODO same as send files, does this buffer matter?
 		long bytesToRead = 8192;
+		boolean nonCompleteTransfer = false;
 
 		try (SocketChannel inChannel = socket.getChannel();
 				RandomAccessFile outputStream = new RandomAccessFile(file, "rw");
 				FileChannel outChannel = outputStream.getChannel();) {
 
 			acknowledge = new SendFileTransferAcknowlegement(inChannel, outChannel);
-			if(this.configuration.isAllocatingSpace())
-				outputStream.setLength(this.fileTransferStatus.getFileSize());
+			if(configuration.isAllocatingSpace()) {
+				outputStream.setLength(fileTransferStatus.getFileSize());
+				outputStream.seek(fileTransferStatus.getFileSize() - 1);
+				outputStream.writeByte(0);
+				outputStream.seek(0);
+			}
 			fileTransferStatus.start();
 
 			outChannel.position(fileTransferStatus.startPosition);
 			while (outChannel.position() < fileTransferStatus.fileSize) {
 				if (dccHandler.shuttingDown || fileTransferStatus.dccState == DccState.SHUTDOWN) {
+					nonCompleteTransfer = true;
 					break;
 				}
 
@@ -87,12 +93,14 @@ public class ReceiveFileTransfer extends FileTransfer {
 
 			} catch (InterruptedException e) {
 				fileTransferStatus.dccState = DccState.ERROR;
+				nonCompleteTransfer = true;
 				log.error(
 						"Receive file transfer of file {} failed to clean up gracefully! Please report this error with logs.",
 						file.getName(), e);
 			}
 		} catch (IOException e) {
 			fileTransferStatus.dccState = DccState.ERROR;
+			nonCompleteTransfer = true;
 			fileTransferStatus.exception = new DccException(Reason.FILE_TRANSFER_CANCELLED, user, "User closed socket",
 					e);
 		} finally {
@@ -102,7 +110,7 @@ public class ReceiveFileTransfer extends FileTransfer {
 
 		}
 		
-		if(fileTransferStatus.dccState == DccState.ERROR && this.configuration.isAllocatingSpace()) {
+		if(nonCompleteTransfer && configuration.isAllocatingSpace()) {
 			try(RandomAccessFile outputStream = new RandomAccessFile(file, "rw")) {
 				outputStream.setLength(fileTransferStatus.getBytesAcknowledged());
 			} catch (IOException e) {
